@@ -10,7 +10,7 @@ import com.internship.infosys.service.DashboardService;
 
 @RestController
 @RequestMapping("/api/dashboard")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://agent-6a7decacc5a0a1ca77--bespoke-begonia-5037cf.netlify.app")
 public class DashboardController {
 
     @Autowired
