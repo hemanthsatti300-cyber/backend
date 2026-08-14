@@ -14,7 +14,7 @@ import com.internship.infosys.service.AssetService;
 
 @RestController
 @RequestMapping("/api/assets")
-@CrossOrigin(origins = "https://agent-6a7decacc5a0a1ca77--bespoke-begonia-5037cf.netlify.app")
+@CrossOrigin(origins = "https://frontend-1xoh.onrender.com")
 public class AssetController {
 
     @Autowired
