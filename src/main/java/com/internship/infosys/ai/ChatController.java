@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(
+    origins = "https://agent-6a7decacc5a0a1ca77--bespoke-begonia-5037cf.netlify.app"
+)
 public class ChatController {
 
     @Autowired
@@ -19,7 +21,5 @@ public class ChatController {
         return ResponseEntity.ok(
                 chatService.chat(request)
         );
-
     }
-
 }
