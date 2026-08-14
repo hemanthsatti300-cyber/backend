@@ -8,7 +8,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.internship.infosys.dto.LoginRequest;
 import com.internship.infosys.dto.LoginResponse;
@@ -46,177 +45,48 @@ public class AuthServiceImpl implements AuthService {
     // =====================================================
 
     @Override
-    @Transactional
     public String register(RegisterRequest request) {
 
-        // =================================================
-        // NORMALIZE EMAIL
-        // =================================================
+        // ---------------------------------------------
+        // Normalize email
+        // ---------------------------------------------
 
-        String email =
-                request.getEmail()
-                        .trim()
-                        .toLowerCase();
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase();
 
-        // =================================================
-        // NORMALIZE USERNAME
-        // =================================================
+        // ---------------------------------------------
+        // Normalize username
+        // ---------------------------------------------
 
-        String username =
-                request.getUsername()
-                        .trim();
+        String username = request.getUsername()
+                .trim();
 
-        System.out.println(
-            "======================================"
-        );
+        // ---------------------------------------------
+        // Check existing email
+        // ---------------------------------------------
 
-        System.out.println(
-            "🚀 REGISTER REQUEST"
-        );
+        if (userRepository.existsByEmail(email)) {
 
-        System.out.println(
-            "Email: [" + email + "]"
-        );
-
-        System.out.println(
-            "Username: [" + username + "]"
-        );
-
-        System.out.println(
-            "======================================"
-        );
-
-        // =================================================
-        // CHECK EMAIL
-        // =================================================
-
-        User existingUser =
-                userRepository
-                    .findByEmail(email)
-                    .orElse(null);
-
-        // =================================================
-        // EXISTING USER
-        // =================================================
-
-        if (existingUser != null) {
-
-            System.out.println(
-                "⚠️ EMAIL ALREADY REGISTERED: "
-                + email
+            throw new RuntimeException(
+                    "Email already exists."
             );
-
-            // ---------------------------------------------
-            // ALREADY VERIFIED
-            // ---------------------------------------------
-
-            if (existingUser.isEmailVerified()) {
-
-                throw new RuntimeException(
-                    "Email already exists. Please login."
-                );
-            }
-
-            // ---------------------------------------------
-            // EXISTING BUT NOT VERIFIED
-            // ---------------------------------------------
-
-            System.out.println(
-                "⚠️ EXISTING ACCOUNT IS NOT VERIFIED"
-            );
-
-            // Delete old tokens
-
-            tokenRepository.deleteByUserId(
-                existingUser.getId()
-            );
-
-            // Create new token
-
-            String newToken =
-                    UUID.randomUUID().toString();
-
-            VerificationToken verificationToken =
-                    new VerificationToken(
-                        newToken,
-                        existingUser,
-                        LocalDateTime.now()
-                            .plusHours(24)
-                    );
-
-            tokenRepository.save(
-                verificationToken
-            );
-
-            // Create deployed verification link
-
-            String verificationLink =
-                    "https://backend-fwcy.onrender.com"
-                    + "/api/auth/verify?token="
-                    + newToken;
-
-            System.out.println(
-                "======================================"
-            );
-
-            System.out.println(
-                "🔗 NEW VERIFICATION LINK:"
-            );
-
-            System.out.println(
-                verificationLink
-            );
-
-            System.out.println(
-                "======================================"
-            );
-
-            // Send again
-
-            try {
-
-                emailService.sendVerificationEmail(
-                    existingUser.getEmail(),
-                    existingUser.getUsername(),
-                    verificationLink
-                );
-
-                return
-                    "Account already exists but is not verified. "
-                    + "A new verification email has been sent.";
-
-            } catch (Exception e) {
-
-                System.out.println(
-                    "❌ EMAIL RESEND FAILED"
-                );
-
-                System.out.println(
-                    e.getMessage()
-                );
-
-                return
-                    "Account exists but verification email "
-                    + "could not be sent. "
-                    + "Please check the STS console for the "
-                    + "verification link.";
-            }
         }
 
-        // =================================================
-        // CHECK USERNAME
-        // =================================================
+        // ---------------------------------------------
+        // Check existing username
+        // ---------------------------------------------
 
         if (userRepository.existsByUsername(username)) {
 
             throw new RuntimeException(
-                "Username already exists."
+                    "Username already exists."
             );
         }
 
-        // =================================================
-        // CREATE USER
-        // =================================================
+        // ---------------------------------------------
+        // Create User
+        // ---------------------------------------------
 
         User user = new User();
 
@@ -225,22 +95,22 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(email);
 
         user.setDepartment(
-            request.getDepartment()
+                request.getDepartment()
         );
 
-        // =================================================
-        // PASSWORD
-        // =================================================
+        // ---------------------------------------------
+        // Encrypt password
+        // ---------------------------------------------
 
         user.setPassword(
-            passwordEncoder.encode(
-                request.getPassword()
-            )
+                passwordEncoder.encode(
+                        request.getPassword()
+                )
         );
 
-        // =================================================
-        // ROLE
-        // =================================================
+        // ---------------------------------------------
+        // Set role
+        // ---------------------------------------------
 
         if (request.getRole() == null) {
 
@@ -248,34 +118,23 @@ public class AuthServiceImpl implements AuthService {
 
         } else {
 
-            user.setRole(
-                request.getRole()
-            );
+            user.setRole(request.getRole());
         }
 
-        // =================================================
-        // ACCOUNT STATUS
-        // =================================================
+        // ---------------------------------------------
+        // Account initially disabled
+        // ---------------------------------------------
 
         user.setEnabled(false);
 
         user.setEmailVerified(false);
 
-        // =================================================
-        // SAVE USER
-        // =================================================
+        // ---------------------------------------------
+        // Save user
+        // ---------------------------------------------
 
         User savedUser =
                 userRepository.save(user);
-
-        System.out.println(
-            "✅ USER CREATED"
-        );
-
-        System.out.println(
-            "User ID: "
-            + savedUser.getId()
-        );
 
         // =================================================
         // CREATE VERIFICATION TOKEN
@@ -286,89 +145,51 @@ public class AuthServiceImpl implements AuthService {
 
         VerificationToken verificationToken =
                 new VerificationToken(
-                    token,
-                    savedUser,
-                    LocalDateTime.now()
-                        .plusHours(24)
+                        token,
+                        savedUser,
+                        LocalDateTime.now()
+                                .plusHours(24)
                 );
 
         tokenRepository.save(
-            verificationToken
+                verificationToken
         );
 
         // =================================================
-        // DEPLOYED VERIFICATION LINK
+        // CREATE VERIFICATION LINK
         // =================================================
 
         String verificationLink =
-                "https://backend-fwcy.onrender.com"
-                + "/api/auth/verify?token="
-                + token;
+                "https://backend-fwcy.onrender.com/api/auth/verify?token="
+                        + token;
 
         System.out.println(
-            "======================================"
+                "======================================"
         );
 
         System.out.println(
-            "🔗 VERIFICATION LINK:"
+                "VERIFICATION LINK:"
         );
 
         System.out.println(
-            verificationLink
+                verificationLink
         );
 
         System.out.println(
-            "======================================"
+                "======================================"
         );
 
         // =================================================
         // SEND EMAIL
         // =================================================
 
-        try {
-
-            emailService.sendVerificationEmail(
+        emailService.sendVerificationEmail(
                 savedUser.getEmail(),
                 savedUser.getUsername(),
                 verificationLink
-            );
+        );
 
-            System.out.println(
-                "✅ VERIFICATION EMAIL SENT"
-            );
-
-            return
-                "Registration successful. "
-                + "Please check your email.";
-
-        } catch (Exception e) {
-
-            System.out.println(
-                "❌ EMAIL SENDING FAILED"
-            );
-
-            System.out.println(
-                "Email: "
-                + savedUser.getEmail()
-            );
-
-            System.out.println(
-                "Reason: "
-                + e.getMessage()
-            );
-
-            /*
-             * The verification link is still printed
-             * above, so you can use it during deployment
-             * when an email provider rejects an address.
-             */
-
-            return
-                "Registration successful, but the "
-                + "verification email could not be sent. "
-                + "Please check the backend console for "
-                + "the verification link.";
-        }
+        return "Registration successful. Please check your email.";
     }
 
     // =====================================================
@@ -378,25 +199,28 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest request) {
 
-        String email =
-                request.getEmail()
-                    .trim()
-                    .toLowerCase();
+        // ---------------------------------------------
+        // Normalize email
+        // ---------------------------------------------
+
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase();
 
         System.out.println(
-            "======================================"
+                "======================================"
         );
 
         System.out.println(
-            "🔐 LOGIN REQUEST"
+                "LOGIN REQUEST"
         );
 
         System.out.println(
-            "Email: [" + email + "]"
+                "Email received: [" + email + "]"
         );
 
         System.out.println(
-            "======================================"
+                "======================================"
         );
 
         // =================================================
@@ -404,145 +228,178 @@ public class AuthServiceImpl implements AuthService {
         // =================================================
 
         User user =
-            userRepository
-                .findByEmail(email)
-                .orElseThrow(() ->
-                    new RuntimeException(
-                        "Invalid email or password."
-                    )
-                );
+                userRepository
+                        .findByEmail(email)
+                        .orElseThrow(() -> {
+
+                            System.out.println(
+                                    "❌ USER NOT FOUND"
+                            );
+
+                            System.out.println(
+                                    "Email searched: ["
+                                            + email
+                                            + "]"
+                            );
+
+                            return new RuntimeException(
+                                    "Invalid email or password."
+                            );
+                        });
+
+        // =================================================
+        // USER FOUND
+        // =================================================
 
         System.out.println(
-            "✅ USER FOUND"
+                "✅ USER FOUND"
         );
 
         System.out.println(
-            "User ID: "
-            + user.getId()
+                "User ID: " + user.getId()
         );
 
         System.out.println(
-            "Username: "
-            + user.getUsername()
+                "Username: " + user.getUsername()
         );
 
         System.out.println(
-            "Email Verified: "
-            + user.isEmailVerified()
+                "Database Email: ["
+                        + user.getEmail()
+                        + "]"
         );
 
         System.out.println(
-            "Enabled: "
-            + user.isEnabled()
+                "Email Verified: "
+                        + user.isEmailVerified()
         );
 
         System.out.println(
-            "Role: "
-            + user.getRole()
+                "Account Enabled: "
+                        + user.isEnabled()
+        );
+
+        System.out.println(
+                "Role: "
+                        + user.getRole()
         );
 
         // =================================================
-        // VERIFY EMAIL
+        // CHECK EMAIL VERIFICATION
         // =================================================
 
         if (!user.isEmailVerified()) {
 
+            System.out.println(
+                    "❌ EMAIL NOT VERIFIED"
+            );
+
             throw new RuntimeException(
-                "Please verify your email before logging in."
+                    "Please verify your email before logging in."
             );
         }
 
         // =================================================
-        // ENABLED
+        // CHECK ACCOUNT ENABLED
         // =================================================
 
         if (!user.isEnabled()) {
 
+            System.out.println(
+                    "❌ ACCOUNT DISABLED"
+            );
+
             throw new RuntimeException(
-                "Your account is disabled."
+                    "Your account is disabled."
             );
         }
 
         // =================================================
-        // AUTHENTICATE PASSWORD
+        // AUTHENTICATE EMAIL + PASSWORD
         // =================================================
 
         try {
 
             authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    email,
-                    request.getPassword()
-                )
+
+                    new UsernamePasswordAuthenticationToken(
+                            email,
+                            request.getPassword()
+                    )
+            );
+
+            System.out.println(
+                    "✅ PASSWORD AUTHENTICATION SUCCESS"
             );
 
         } catch (Exception e) {
 
             System.out.println(
-                "❌ PASSWORD AUTHENTICATION FAILED"
+                    "❌ PASSWORD AUTHENTICATION FAILED"
+            );
+
+            System.out.println(
+                    "Reason: "
+                            + e.getMessage()
             );
 
             throw new RuntimeException(
-                "Invalid email or password."
+                    "Invalid email or password."
             );
         }
 
-        System.out.println(
-            "✅ PASSWORD AUTHENTICATION SUCCESS"
-        );
-
         // =================================================
-        // JWT
+        // GENERATE JWT
         // =================================================
 
         String token =
                 jwtUtil.generateToken(email);
 
         System.out.println(
-            "✅ JWT GENERATED"
+                "✅ JWT GENERATED"
         );
 
         // =================================================
-        // RESPONSE
+        // CREATE LOGIN RESPONSE
         // =================================================
 
         LoginResponse response =
                 new LoginResponse();
 
         response.setId(
-            user.getId()
+                user.getId()
         );
 
         response.setToken(
-            token
+                token
         );
 
         response.setUsername(
-            user.getUsername()
+                user.getUsername()
         );
 
         response.setEmail(
-            user.getEmail()
+                user.getEmail()
         );
 
         response.setDepartment(
-            user.getDepartment()
+                user.getDepartment()
         );
 
         response.setRole(
-            user.getRole()
+                user.getRole()
         );
 
         System.out.println(
-            "======================================"
+                "======================================"
         );
 
         System.out.println(
-            "✅ LOGIN SUCCESS"
+                "✅ LOGIN SUCCESS"
         );
 
         System.out.println(
-            "======================================"
+                "======================================"
         );
 
         return response;
@@ -553,24 +410,22 @@ public class AuthServiceImpl implements AuthService {
     // =====================================================
 
     @Override
-    @Transactional
     public String verifyEmail(String token) {
 
         System.out.println(
-            "======================================"
+                "======================================"
         );
 
         System.out.println(
-            "📧 EMAIL VERIFICATION REQUEST"
+                "EMAIL VERIFICATION REQUEST"
         );
 
         System.out.println(
-            "Token: "
-            + token
+                "Token: " + token
         );
 
         System.out.println(
-            "======================================"
+                "======================================"
         );
 
         // =================================================
@@ -578,45 +433,41 @@ public class AuthServiceImpl implements AuthService {
         // =================================================
 
         VerificationToken verificationToken =
-            tokenRepository
-                .findByToken(token)
-                .orElseThrow(() ->
-                    new RuntimeException(
-                        "Invalid verification token."
-                    )
-                );
+                tokenRepository
+                        .findByToken(token)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Invalid verification token."
+                                )
+                        );
 
         // =================================================
-        // EXPIRY
+        // CHECK TOKEN EXPIRY
         // =================================================
 
         if (verificationToken
                 .getExpiryDate()
                 .isBefore(LocalDateTime.now())) {
 
-            tokenRepository.delete(
-                verificationToken
-            );
-
             throw new RuntimeException(
-                "Verification token has expired."
+                    "Verification token has expired."
             );
         }
 
         // =================================================
-        // USER
+        // GET USER
         // =================================================
 
         User user =
-            verificationToken.getUser();
+                verificationToken.getUser();
 
         System.out.println(
-            "User being verified: "
-            + user.getEmail()
+                "User being verified: "
+                        + user.getEmail()
         );
 
         // =================================================
-        // VERIFY
+        // VERIFY USER
         // =================================================
 
         user.setEnabled(true);
@@ -626,42 +477,30 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         // =================================================
-        // DELETE TOKEN
+        // DELETE USED TOKEN
         // =================================================
 
         tokenRepository.delete(
-            verificationToken
+                verificationToken
         );
 
         System.out.println(
-            "======================================"
+                "✅ EMAIL VERIFIED"
         );
 
         System.out.println(
-            "✅ EMAIL VERIFIED"
+                "User: " + user.getEmail()
         );
 
         System.out.println(
-            "User: "
-            + user.getEmail()
+                "Enabled: " + user.isEnabled()
         );
 
         System.out.println(
-            "Enabled: "
-            + user.isEnabled()
+                "Email Verified: "
+                        + user.isEmailVerified()
         );
 
-        System.out.println(
-            "Email Verified: "
-            + user.isEmailVerified()
-        );
-
-        System.out.println(
-            "======================================"
-        );
-
-        return
-            "Email verified successfully. "
-            + "You can now login.";
+        return "Email verified successfully. You can now login.";
     }
 }
