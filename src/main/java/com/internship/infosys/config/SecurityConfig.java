@@ -307,7 +307,7 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(
             List.of(
-               "https://agent-6a7decacc5a0a1ca77--bespoke-begonia-5037cf.netlify.app"
+               "https://frontend-1xoh.onrender.com"
             )
         );
 
