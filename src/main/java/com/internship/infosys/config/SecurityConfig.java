@@ -307,7 +307,7 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(
             List.of(
-               "https://frontend-1xoh.onrender.com"
+                "https://frontend-1xoh.onrender.com"
             )
         );
 
