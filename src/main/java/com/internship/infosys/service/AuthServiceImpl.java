@@ -160,7 +160,7 @@ public class AuthServiceImpl implements AuthService {
         // =================================================
 
         String verificationLink =
-                "backend-production-9ab6.up.railway.app"
+                "https://backend-production-9ab6.up.railway.app"
                 + "/api/auth/verify?token="
                 + token;
 
