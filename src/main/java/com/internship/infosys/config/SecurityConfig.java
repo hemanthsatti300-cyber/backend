@@ -307,7 +307,7 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(
             List.of(
-                "http://localhost:5173"
+               "https://agent-6a7decacc5a0a1ca77--bespoke-begonia-5037cf.netlify.app"
             )
         );
 
