@@ -19,7 +19,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "https://backend-fwcy.onrender.com/")
+@CrossOrigin(origins = "https://frontend-1xoh.onrender.com")
 public class AuthController {
 
     @Autowired
