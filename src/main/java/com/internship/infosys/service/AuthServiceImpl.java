@@ -160,8 +160,9 @@ public class AuthServiceImpl implements AuthService {
         // =================================================
 
         String verificationLink =
-                "https://backend-fwcy.onrender.com/api/auth/verify?token="
-                        + token;
+               "https://backend-fwcy.onrender.com"
+        + "/api/auth/verify?token="
+        + token;
 
         System.out.println(
                 "======================================"
