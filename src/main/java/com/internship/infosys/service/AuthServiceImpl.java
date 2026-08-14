@@ -160,7 +160,7 @@ public class AuthServiceImpl implements AuthService {
         // =================================================
 
         String verificationLink =
-                "https://agent-6a7decacc5a0a1ca77--bespoke-begonia-5037cf.netlify.app"
+                "https://frontend-1xoh.onrender.com"
                         + token;
 
         System.out.println(
