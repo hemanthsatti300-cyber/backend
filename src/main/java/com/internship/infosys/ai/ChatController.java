@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/ai")
 @CrossOrigin(
-    origins = "https://frontend-1xoh.onrender.com"
+    origins = "https://backend-fwcy.onrender.com/"
 )
 public class ChatController {
 
