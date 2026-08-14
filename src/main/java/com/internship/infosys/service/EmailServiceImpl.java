@@ -2,6 +2,7 @@ package com.internship.infosys.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +12,9 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    // ==========================================
-    // Generic Email
-    // ==========================================
+    // =====================================================
+    // GENERIC EMAIL
+    // =====================================================
 
     @Override
     public void sendEmail(
@@ -21,20 +22,55 @@ public class EmailServiceImpl implements EmailService {
             String subject,
             String body) {
 
-        SimpleMailMessage message = new SimpleMailMessage();
+        try {
 
-        message.setTo(to);
+            SimpleMailMessage message =
+                    new SimpleMailMessage();
 
-        message.setSubject(subject);
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
 
-        message.setText(body);
+            System.out.println("======================================");
+            System.out.println("📧 SENDING EMAIL");
+            System.out.println("To: " + to);
+            System.out.println("Subject: " + subject);
+            System.out.println("======================================");
 
-        mailSender.send(message);
+            mailSender.send(message);
+
+            System.out.println("✅ EMAIL SENT SUCCESSFULLY");
+            System.out.println("To: " + to);
+            System.out.println("======================================");
+
+        } catch (MailException e) {
+
+            /*
+             * IMPORTANT:
+             * Do NOT throw the exception here.
+             *
+             * If SMTP fails, registration should still succeed.
+             */
+
+            System.out.println("======================================");
+            System.out.println("❌ EMAIL SENDING FAILED");
+            System.out.println("To: " + to);
+            System.out.println("Reason: " + e.getMessage());
+            System.out.println("======================================");
+
+        } catch (Exception e) {
+
+            System.out.println("======================================");
+            System.out.println("❌ UNEXPECTED EMAIL ERROR");
+            System.out.println("To: " + to);
+            System.out.println("Reason: " + e.getMessage());
+            System.out.println("======================================");
+        }
     }
 
-    // ==========================================
-    // Verification Email
-    // ==========================================
+    // =====================================================
+    // VERIFICATION EMAIL
+    // =====================================================
 
     @Override
     public void sendVerificationEmail(
@@ -42,7 +78,8 @@ public class EmailServiceImpl implements EmailService {
             String username,
             String verificationLink) {
 
-        String subject = "Verify Your SentinelCore SecureOps Account";
+        String subject =
+                "Verify Your SentinelCore SecureOps Account";
 
         String body = """
                 Hello %s,
@@ -51,7 +88,7 @@ public class EmailServiceImpl implements EmailService {
 
                 Thank you for registering.
 
-                Please click the link below to verify your account.
+                Please click the link below to verify your account:
 
                 %s
 
@@ -63,8 +100,35 @@ public class EmailServiceImpl implements EmailService {
                 Regards,
                 SentinelCore SecureOps Team
                 """
-                .formatted(username, verificationLink);
+                .formatted(
+                        username,
+                        verificationLink
+                );
 
-        sendEmail(to, subject, body);
+        // =================================================
+        // ALWAYS PRINT VERIFICATION LINK
+        // =================================================
+
+        System.out.println();
+        System.out.println("======================================");
+        System.out.println("🔐 EMAIL VERIFICATION");
+        System.out.println("======================================");
+        System.out.println("User: " + username);
+        System.out.println("Email: " + to);
+        System.out.println();
+        System.out.println("VERIFICATION LINK:");
+        System.out.println(verificationLink);
+        System.out.println("======================================");
+        System.out.println();
+
+        // =================================================
+        // TRY TO SEND EMAIL
+        // =================================================
+
+        sendEmail(
+                to,
+                subject,
+                body
+        );
     }
 }
