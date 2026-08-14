@@ -63,6 +63,22 @@ public class AuthServiceImpl implements AuthService {
                 .trim();
 
         // ---------------------------------------------
+        // Validate email
+        // ---------------------------------------------
+
+        if (email.isEmpty()) {
+            throw new RuntimeException("Email is required.");
+        }
+
+        // ---------------------------------------------
+        // Validate username
+        // ---------------------------------------------
+
+        if (username.isEmpty()) {
+            throw new RuntimeException("Username is required.");
+        }
+
+        // ---------------------------------------------
         // Check existing email
         // ---------------------------------------------
 
@@ -84,9 +100,9 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        // ---------------------------------------------
-        // Create User
-        // ---------------------------------------------
+        // =================================================
+        // CREATE USER
+        // =================================================
 
         User user = new User();
 
@@ -118,20 +134,22 @@ public class AuthServiceImpl implements AuthService {
 
         } else {
 
-            user.setRole(request.getRole());
+            user.setRole(
+                    request.getRole()
+            );
         }
 
         // ---------------------------------------------
-        // Account initially disabled
+        // Account disabled until verification
         // ---------------------------------------------
 
         user.setEnabled(false);
 
         user.setEmailVerified(false);
 
-        // ---------------------------------------------
-        // Save user
-        // ---------------------------------------------
+        // =================================================
+        // SAVE USER
+        // =================================================
 
         User savedUser =
                 userRepository.save(user);
@@ -156,16 +174,42 @@ public class AuthServiceImpl implements AuthService {
         );
 
         // =================================================
-        // CREATE VERIFICATION LINK
+        // CREATE RENDER VERIFICATION LINK
         // =================================================
 
         String verificationLink =
-               "backend-production-9ab6.up.railway.app"
-        + "/api/auth/verify?token="
-        + token;
+                "https://backend-fwcy.onrender.com"
+                + "/api/auth/verify?token="
+                + token;
+
+        // =================================================
+        // DEBUG
+        // =================================================
 
         System.out.println(
-                "======================================"
+                "=========================================="
+        );
+
+        System.out.println(
+                "REGISTRATION SUCCESS"
+        );
+
+        System.out.println(
+                "User: " + savedUser.getEmail()
+        );
+
+        System.out.println(
+                "Role: " + savedUser.getRole()
+        );
+
+        System.out.println(
+                "Email Verified: "
+                        + savedUser.isEmailVerified()
+        );
+
+        System.out.println(
+                "Account Enabled: "
+                        + savedUser.isEnabled()
         );
 
         System.out.println(
@@ -177,18 +221,48 @@ public class AuthServiceImpl implements AuthService {
         );
 
         System.out.println(
-                "======================================"
+                "=========================================="
         );
 
         // =================================================
-        // SEND EMAIL
+        // SEND VERIFICATION EMAIL
         // =================================================
 
-        emailService.sendVerificationEmail(
-                savedUser.getEmail(),
-                savedUser.getUsername(),
-                verificationLink
-        );
+        try {
+
+            emailService.sendVerificationEmail(
+                    savedUser.getEmail(),
+                    savedUser.getUsername(),
+                    verificationLink
+            );
+
+            System.out.println(
+                    "✅ VERIFICATION EMAIL SENT TO: "
+                            + savedUser.getEmail()
+            );
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "❌ FAILED TO SEND VERIFICATION EMAIL"
+            );
+
+            System.out.println(
+                    "Email: "
+                            + savedUser.getEmail()
+            );
+
+            System.out.println(
+                    "Reason: "
+                            + e.getMessage()
+            );
+
+            e.printStackTrace();
+
+            throw new RuntimeException(
+                    "Registration completed, but verification email could not be sent."
+            );
+        }
 
         return "Registration successful. Please check your email.";
     }
@@ -200,16 +274,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest request) {
 
-        // ---------------------------------------------
-        // Normalize email
-        // ---------------------------------------------
-
         String email = request.getEmail()
                 .trim()
                 .toLowerCase();
 
         System.out.println(
-                "======================================"
+                "=========================================="
         );
 
         System.out.println(
@@ -217,11 +287,11 @@ public class AuthServiceImpl implements AuthService {
         );
 
         System.out.println(
-                "Email received: [" + email + "]"
+                "Email: [" + email + "]"
         );
 
         System.out.println(
-                "======================================"
+                "=========================================="
         );
 
         // =================================================
@@ -237,19 +307,13 @@ public class AuthServiceImpl implements AuthService {
                                     "❌ USER NOT FOUND"
                             );
 
-                            System.out.println(
-                                    "Email searched: ["
-                                            + email
-                                            + "]"
-                            );
-
                             return new RuntimeException(
                                     "Invalid email or password."
                             );
                         });
 
         // =================================================
-        // USER FOUND
+        // USER INFORMATION
         // =================================================
 
         System.out.println(
@@ -257,17 +321,13 @@ public class AuthServiceImpl implements AuthService {
         );
 
         System.out.println(
-                "User ID: " + user.getId()
+                "User ID: "
+                        + user.getId()
         );
 
         System.out.println(
-                "Username: " + user.getUsername()
-        );
-
-        System.out.println(
-                "Database Email: ["
-                        + user.getEmail()
-                        + "]"
+                "Username: "
+                        + user.getUsername()
         );
 
         System.out.println(
@@ -301,7 +361,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // =================================================
-        // CHECK ACCOUNT ENABLED
+        // CHECK ACCOUNT STATUS
         // =================================================
 
         if (!user.isEnabled()) {
@@ -316,7 +376,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // =================================================
-        // AUTHENTICATE EMAIL + PASSWORD
+        // AUTHENTICATE USER
         // =================================================
 
         try {
@@ -361,7 +421,7 @@ public class AuthServiceImpl implements AuthService {
         );
 
         // =================================================
-        // CREATE LOGIN RESPONSE
+        // LOGIN RESPONSE
         // =================================================
 
         LoginResponse response =
@@ -392,7 +452,7 @@ public class AuthServiceImpl implements AuthService {
         );
 
         System.out.println(
-                "======================================"
+                "=========================================="
         );
 
         System.out.println(
@@ -400,7 +460,7 @@ public class AuthServiceImpl implements AuthService {
         );
 
         System.out.println(
-                "======================================"
+                "=========================================="
         );
 
         return response;
@@ -414,7 +474,7 @@ public class AuthServiceImpl implements AuthService {
     public String verifyEmail(String token) {
 
         System.out.println(
-                "======================================"
+                "=========================================="
         );
 
         System.out.println(
@@ -426,8 +486,19 @@ public class AuthServiceImpl implements AuthService {
         );
 
         System.out.println(
-                "======================================"
+                "=========================================="
         );
+
+        // =================================================
+        // VALIDATE TOKEN INPUT
+        // =================================================
+
+        if (token == null || token.trim().isEmpty()) {
+
+            throw new RuntimeException(
+                    "Verification token is missing."
+            );
+        }
 
         // =================================================
         // FIND TOKEN
@@ -471,9 +542,9 @@ public class AuthServiceImpl implements AuthService {
         // VERIFY USER
         // =================================================
 
-        user.setEnabled(true);
-
         user.setEmailVerified(true);
+
+        user.setEnabled(true);
 
         userRepository.save(user);
 
@@ -485,21 +556,35 @@ public class AuthServiceImpl implements AuthService {
                 verificationToken
         );
 
+        // =================================================
+        // SUCCESS LOG
+        // =================================================
+
         System.out.println(
-                "✅ EMAIL VERIFIED"
+                "=========================================="
         );
 
         System.out.println(
-                "User: " + user.getEmail()
+                "✅ EMAIL VERIFIED SUCCESSFULLY"
         );
 
         System.out.println(
-                "Enabled: " + user.isEnabled()
+                "User: "
+                        + user.getEmail()
+        );
+
+        System.out.println(
+                "Enabled: "
+                        + user.isEnabled()
         );
 
         System.out.println(
                 "Email Verified: "
                         + user.isEmailVerified()
+        );
+
+        System.out.println(
+                "=========================================="
         );
 
         return "Email verified successfully. You can now login.";
